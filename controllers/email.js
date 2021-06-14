@@ -32,12 +32,11 @@ exports.SendEmailConfirmation = ($recipient, $username, $url_toConfirm) => {
             username: $username,
             url_confirm: $url_toConfirm
         };
-c
         //  Set email template
         var htmlToSend = template(replacements);
         //  Create email formart
         var mailOptions = {
-        from: '"Palace Petz 🐶" <palacepetz.shop@gmail.com>',
+        from: '"Palace Petz" <palacepetz.shop@gmail.com>',
         to: $recipient,
         subject: 'Confirmação de e-mail!',
         html : htmlToSend
@@ -79,7 +78,7 @@ exports.SendPasswordReset = ($recipient, $reset_link) => {
         var htmlToSend = template(replacements);
         //  Create email formart
         var mailOptions = {
-        from: '"Palace Petz 🐱" <palacepetz.shop@gmail.com>',
+        from: '"Palace Petz" <palacepetz.shop@gmail.com>',
         to: $recipient,
         subject: 'Redefinição de senha!',
         html : htmlToSend
@@ -97,7 +96,7 @@ exports.SendPasswordReset = ($recipient, $reset_link) => {
 }
 
 //  Method to send order confirmation
-exports.SendOrderConfirmation = ($recipient, $order_id, $order_date, $sub_total, $discount, $order_total,
+exports.SendOrderConfirmation = ($recipient, $name_user, $order_id, $order_date, $sub_total, $discount, $order_total,
     $address_user, $complement, $zipcode) => {
 
     //  Create HTML reader
@@ -116,6 +115,7 @@ exports.SendOrderConfirmation = ($recipient, $order_id, $order_date, $sub_total,
         var template = handlebars.compile(html);
         var replacements = {
             order_id: $order_id,
+            name_user: $name_user,
             order_date: $order_date,
             sub_total: $sub_total,
             discount: $discount,
@@ -130,9 +130,52 @@ exports.SendOrderConfirmation = ($recipient, $order_id, $order_date, $sub_total,
         var htmlToSend = template(replacements);
         //  Create email formart
         var mailOptions = {
-        from: '"Palace Petz 🐣" <palacepetz.shop@gmail.com>',
+        from: '"Palace Petz" <palacepetz.shop@gmail.com>',
         to: $recipient,
         subject: 'Pedido #' + $order_id,
+        html : htmlToSend
+    };
+    transporter.sendMail(mailOptions, function(error, info){
+        if (error) {
+            console.log(error);
+            return "Error";
+        } else {
+            console.log('Confirm Order Email sent: ' + info.response);
+            return "Sent";
+        }
+    });
+    });
+}
+//  Method to send Password has change
+exports.SendPasswordHasChange = ($recipient, $nm_user, $user_id) => {
+
+    //  Create HTML reader
+    var readHTMLFile = function(path, callback) {
+        fs.readFile(path, {encoding: 'utf-8'}, function (err, html) {
+            if (err) {
+                throw err;
+                callback(err);
+            }
+            else {
+                callback(null, html);
+            }
+        });
+    };
+    readHTMLFile(__dirname + '/templates/passwordhaschange.html', function(err, html) {
+        var template = handlebars.compile(html);
+        var replacements = {
+            recipient: $recipient,
+            nm_user: $nm_user,
+            user_id: $user_id
+        };
+
+        //  Set email template
+        var htmlToSend = template(replacements);
+        //  Create email formart
+        var mailOptions = {
+        from: '"Palace Petz" <palacepetz.shop@gmail.com>',
+        to: $recipient,
+        subject: 'Sua senha da PalacePetz foi alterada',
         html : htmlToSend
     };
     transporter.sendMail(mailOptions, function(error, info){

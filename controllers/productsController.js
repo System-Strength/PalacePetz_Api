@@ -121,7 +121,7 @@ exports.ListAllProducts = async (req, res, next) => {
 		prod.image_prod,
 		prod.popular
         from tbl_products as prod inner join tbl_category as cat
-        on prod.cd_category = cat.cd_category;`);
+        on prod.cd_category = cat.cd_category ORDER BY RAND();`);
         if (results.length <= 0) {
             return res.status(204).send({ message: 'No Products registerd' })
         }else{
@@ -156,21 +156,10 @@ exports.ListAllPopularProducts = async (req, res, next) => {
     try{
         ServerDetails.showRequestId()
         const results = await mysql.execute(`select 
-		prod.cd_prod,
-		prod.cd_category,
-		cat.nm_category,
-		prod.nm_product,
-		prod.amount,
-		prod.species,
-		prod.product_price,
-		prod.species,
-		prod.description,
-		prod.date_prod,
-		prod.shelf_life,
-		prod.image_prod,
-		prod.popular
+		prod.*,
+		cat.nm_category
         from tbl_products as prod inner join tbl_category as cat
-        on prod.cd_category = cat.cd_category WHERE prod.popular = 1;`);
+        on prod.cd_category = cat.cd_category WHERE prod.popular = 1 and prod.amount > 0;`);
         if (results.length <= 0) {
             return res.status(204).send({ message: 'No Products registerd' })
         }else{
@@ -367,6 +356,54 @@ exports.ListProductsByLowestPrice = async (req, res, next) => {
 		prod.popular
         from tbl_products  as prod inner join tbl_category as cat
         on prod.cd_category = cat.cd_category ORDER BY prod.product_price ASC;`);
+        if (results.length <= 0) {
+            return res.status(204).send({ message: 'No Products registerd' })
+        }else{
+            const response = {
+                Search: results.map(products => {
+                    return {
+                        cd_prod: parseInt(products.cd_prod),
+                        cd_category: parseInt(products.cd_category),
+                        nm_category: products.nm_category,
+                        nm_product: products.nm_product,
+                        amount: parseInt(products.amount),
+                        species: products.species,
+                        product_price: parseFloat(products.product_price),
+                        description: products.description,
+                        date_prod: products.date_prod,
+                        shelf_life: products.shelf_life,
+                        image_prod: products.image_prod,
+                        popular: parseInt(products.popular)
+                    }
+                })
+                }
+            return res.status(200).send(response)
+            }
+    }catch (error){
+        ServerDetails.RegisterServerError("List All Products", error.toString())
+        return res.status(500).send({error: error})
+    }
+}
+
+exports.ListProductsByName = async (req, res, next) => {
+    try{
+        ServerDetails.showRequestId()
+        const results = await mysql.execute(`select 
+		prod.cd_prod,
+		prod.cd_category,
+		cat.nm_category,
+		prod.nm_product,
+		prod.amount,
+		prod.species,
+		prod.product_price,
+		prod.species,
+		prod.description,
+		prod.date_prod,
+		prod.shelf_life,
+		prod.image_prod,
+		prod.popular
+        from tbl_products  as prod inner join tbl_category as cat
+        on prod.cd_category = cat.cd_category WHERE prod.nm_product like "%${req.params.nm_product}%";`);
         if (results.length <= 0) {
             return res.status(204).send({ message: 'No Products registerd' })
         }else{

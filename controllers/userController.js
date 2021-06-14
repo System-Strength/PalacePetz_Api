@@ -11,58 +11,112 @@ exports.Login = async (req, res, next) => {
     try{
         ServerDetails.showRequestId()
         var Userlist = []
-        var email = req.body.email
+        var login_emput = req.body.email
         var password = req.body.password
         var id_user = 0;
-        const resultList = await mysql.execute('SELECT * FROM tbl_account;')
-        if(resultList.length > 0){
-            for(var i = 0 ; i < resultList.length; i++){
-                var emailGet = EncryptDep.Decrypt(resultList[i].email);
-                if(emailGet == email){
-                    id_user = resultList[i].id_user
-                    Userlist.push(id_user)
-                }
-            }
-            if(Userlist.length > 0){
-                const result = await mysql.execute('SELECT * FROM tbl_account WHERE id_user = ?', id_user)
-                if(result.length > 0){
-                const match = await bcrypt.compareSync(password, result[0].password);
-                if(match){
-                    var verify_id = result[0].verify_id
-                    var verify = result[0].verify
-                    const response = {
-                        id_user: result[0].id_user,
-                        name_user: EncryptDep.Decrypt(result[0].name_user),
-                        email: EncryptDep.Decrypt(result[0].email),
-                        cpf_user: EncryptDep.Decrypt(result[0].cpf_user),
-                        address_user: EncryptDep.Decrypt(result[0].address_user),
-                        complement: EncryptDep.Decrypt(result[0].complement),
-                        zipcode: EncryptDep.Decrypt(result[0].zipcode),
-                        phone_user: EncryptDep.Decrypt(result[0].phone_user),
-                        birth_date: EncryptDep.Decrypt(result[0].birth_date),
-                        user_type: result[0].user_type,
-                        img_user: EncryptDep.Decrypt(result[0].img_user)
+        if (validateEmail(login_emput)){
+            const resultList = await mysql.execute('SELECT email, id_user FROM tbl_account;')
+            if(resultList.length > 0){
+                for(var i = 0 ; i < resultList.length; i++){
+                    var emailGet = EncryptDep.Decrypt(resultList[i].email);
+                    if(emailGet == login_emput){
+                        id_user = resultList[i].id_user
+                        Userlist.push(id_user)
                     }
-                if(verify_id == "Confirmed" || verify == 1){
-                    return res.status(200).send(response);
-                }else{
-                    return res.status(405).send( {message: 'Email is not verified !!'} );
                 }
+                if(Userlist.length > 0){
+                    const result = await mysql.execute('SELECT * FROM tbl_account WHERE id_user = ?', id_user)
+                    if(result.length > 0){
+                    const match = await bcrypt.compareSync(password, result[0].password);
+                    if(match){
+                        var verify_id = result[0].verify_id
+                        var verify = result[0].verify
+                        const response = {
+                            id_user: result[0].id_user,
+                            name_user: EncryptDep.Decrypt(result[0].name_user),
+                            email: EncryptDep.Decrypt(result[0].email),
+                            cpf_user: EncryptDep.Decrypt(result[0].cpf_user),
+                            address_user: EncryptDep.Decrypt(result[0].address_user),
+                            complement: EncryptDep.Decrypt(result[0].complement),
+                            zipcode: EncryptDep.Decrypt(result[0].zipcode),
+                            phone_user: EncryptDep.Decrypt(result[0].phone_user),
+                            birth_date: EncryptDep.Decrypt(result[0].birth_date),
+                            user_type: result[0].user_type,
+                            img_user: EncryptDep.Decrypt(result[0].img_user)
+                        }
+                    if(verify_id == "Confirmed" || verify == 1){
+                        return res.status(200).send(response);
+                    }else{
+                        return res.status(405).send( {message: 'Email is not verified !!'} );
+                    }
+                    }else{
+                        return res.status(401).send({ message: "Password or email invalid" });
+                    }
+                    }
                 }else{
                     return res.status(401).send({ message: "Password or email invalid" });
                 }
-                }
             }else{
-                return res.status(401).send({ message: "Password or email invalid" });
+                console.log('No email on database')
+                return res.status(500).send({ error: "No email on database"})
             }
         }else{
-            console.log('No email on database')
-            return res.status(500).send({ error: "No email on database"})
+            const resultList = await mysql.execute('SELECT username, id_user FROM tbl_account;')
+            if(resultList.length > 0){
+                for(var i = 0 ; i < resultList.length; i++){
+                    var usernameGET = EncryptDep.Decrypt(resultList[i].username);
+                    if(usernameGET == login_emput.toLowerCase()){
+                        id_user = resultList[i].id_user
+                        Userlist.push(id_user)
+                    }
+                }
+                if(Userlist.length > 0){
+                    const result = await mysql.execute('SELECT * FROM tbl_account WHERE id_user = ?', id_user)
+                    if(result.length > 0){
+                    const match = await bcrypt.compareSync(password, result[0].password);
+                    if(match){
+                        var verify_id = result[0].verify_id
+                        var verify = result[0].verify
+                        const response = {
+                            id_user: result[0].id_user,
+                            name_user: EncryptDep.Decrypt(result[0].name_user),
+                            email: EncryptDep.Decrypt(result[0].email),
+                            cpf_user: EncryptDep.Decrypt(result[0].cpf_user),
+                            address_user: EncryptDep.Decrypt(result[0].address_user),
+                            complement: EncryptDep.Decrypt(result[0].complement),
+                            zipcode: EncryptDep.Decrypt(result[0].zipcode),
+                            phone_user: EncryptDep.Decrypt(result[0].phone_user),
+                            birth_date: EncryptDep.Decrypt(result[0].birth_date),
+                            user_type: result[0].user_type,
+                            img_user: EncryptDep.Decrypt(result[0].img_user)
+                        }
+                    if(verify_id == "Confirmed" || verify == 1)
+                        return res.status(200).send(response);
+                    else
+                        return res.status(405).send( {message: 'Email is not verified !!'} );
+                    
+                    }else
+                        return res.status(401).send({ message: "Password or email invalid" });
+                    
+                    }
+                }else{
+                    return res.status(401).send({ message: "Password or email invalid" });
+                }
+            }else{
+                console.log('No email on database')
+                return res.status(500).send({ error: "No email on database"})
+            }
         }
+        
     }catch (error){
         ServerDetails.RegisterServerError("Login User", error.toString());
         return res.status(500).send({ error: error.toString()})
     }
+}
+
+function validateEmail(email) {
+    const re = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+    return re.test(email);
 }
 
 //  Method for register new user
@@ -84,11 +138,16 @@ exports.RegisterUsers = async (req, res, next) => {
             if(Emailcollection.length > 0){
                 return res.status(409).send({ message: 'User already registered' })
             }else{
-                var idVerifyEMail = makeidForUser(2) + "-Pala"+ makeidForUser(1) +"cePetz-" + "a" + makeidForUser(1) + "l"+ makeidForUser(3) + "a"+ makeidForUser(1) + "c"+ makeidForUser(1) + "e"+ makeidForUser(1) + makeidForUser(9) + "-Pala"+ makeidForUser(1) +"cePetz-" + makeidForUser(2)
+                var idVerifyEMail = Generate_verify_id_for_user(2) + "-Pala"+ Generate_verify_id_for_user(1) +"cePetz-" + "a" + Generate_verify_id_for_user(1) + "l"+ Generate_verify_id_for_user(3) + "a"+ Generate_verify_id_for_user(1) + "c"+ Generate_verify_id_for_user(1) + "e"+ Generate_verify_id_for_user(1) + Generate_verify_id_for_user(9) + "-Pala"+ Generate_verify_id_for_user(1) +"cePetz-" + Generate_verify_id_for_user(2)
                 const hash = await bcrypt.hashSync(req.body.password, 12);
-                query = 'INSERT INTO tbl_account (name_user, email, cpf_user, password, img_user, verify_id) VALUES (?,?,?,?,?,?)';
-                var results = await mysql.execute(query, [ EncryptDep.Encrypto(req.body.name_user), EncryptDep.Encrypto(req.body.email),
+                var cpf_userBase = req.body.cpf_user
+                var nm_userBase = req.body.name_user
+                var username = nm_userBase.replace(' ', '').toLowerCase() + cpf_userBase.split(".")[0] + cpf_userBase.split(".")[1];
+                query = 'INSERT INTO tbl_account (name_user, username, email, cpf_user, password, img_user, verify_id) VALUES (?,?,?,?,?,?,?)';
+                var results = await mysql.execute(query, [ EncryptDep.Encrypto(req.body.name_user), EncryptDep.Encrypto(username), EncryptDep.Encrypto(req.body.email),
                     EncryptDep.Encrypto(req.body.cpf_user), hash, EncryptDep.Encrypto(IMG_USER), idVerifyEMail])
+
+                this.UpdateUserNameIntern(results.insertId, nm_userBase.replace(' ', '').toLowerCase())
 
                 //  Sending email for new user
                 var resultEmail = Emails.SendEmailConfirmation(req.body.email, req.body.name_user, process.env.URL_API + "user/confirm/email/" + idVerifyEMail + "/" + results.insertId)
@@ -107,11 +166,16 @@ exports.RegisterUsers = async (req, res, next) => {
                 }
             }
         }else{
-                var idVerifyEMail = makeidForUser(2) + "-Pala"+ makeidForUser(1) +"cePetz-" + "a" + makeidForUser(1) + "l"+ makeidForUser(3) + "a"+ makeidForUser(1) + "c"+ makeidForUser(1) + "e"+ makeidForUser(1) + makeidForUser(9) + "-Pala"+ makeidForUser(1) +"cePetz-" + makeidForUser(2)
+                var idVerifyEMail = Generate_verify_id_for_user(2) + "-Pala"+ Generate_verify_id_for_user(1) +"cePetz-" + "a" + Generate_verify_id_for_user(1) + "l"+ Generate_verify_id_for_user(3) + "a"+ Generate_verify_id_for_user(1) + "c"+ Generate_verify_id_for_user(1) + "e"+ Generate_verify_id_for_user(1) + Generate_verify_id_for_user(9) + "-Pala"+ Generate_verify_id_for_user(1) +"cePetz-" + Generate_verify_id_for_user(2)
                 const hash = await bcrypt.hashSync(req.body.password, 12);
-                query = 'INSERT INTO tbl_account (name_user, email, cpf_user, password, img_user, verify_id) VALUES (?,?,?,?,?,?)';
-                var results = await mysql.execute(query, [ EncryptDep.Encrypto(req.body.name_user), EncryptDep.Encrypto(req.body.email),
+                var cpf_userBase = req.body.cpf_user
+                var nm_userBase = req.body.name_user
+                var username = nm_userBase.replace(' ', '').toLowerCase() + cpf_userBase.split(".")[0] + cpf_userBase.split(".")[1];
+                query = 'INSERT INTO tbl_account (name_user, username, email, cpf_user, password, img_user, verify_id) VALUES (?,?,?,?,?,?,?)';
+                var results = await mysql.execute(query, [ EncryptDep.Encrypto(req.body.name_user), EncryptDep.Encrypto(username), EncryptDep.Encrypto(req.body.email),
                     EncryptDep.Encrypto(req.body.cpf_user), hash, EncryptDep.Encrypto(IMG_USER), idVerifyEMail])
+
+                this.UpdateUserNameIntern(results.insertId, nm_userBase.replace(' ', '').toLowerCase())
 
                 //  Sending email for new user
                 var resultEmail = Emails.SendEmailConfirmation(req.body.email, req.body.name_user, process.env.URL_API + "user/confirm/email/" + idVerifyEMail + "/" + results.insertId)
@@ -223,7 +287,6 @@ exports.ConfirmEmail = async (req, res, next) => {
         }else{
             const resultList = await mysql.execute('SELECT verify_id FROM tbl_account WHERE id_user = ?;', id_user)
             if(resultList.length > 0){
-                console.log(resultList[0].verify_id)
                 if(resultList[0].verify_id == verify_id){
                     const queryUpdate = `UPDATE tbl_account set verify_id = "Confirmed", verify = 1 WHERE id_user = ?`
                     await mysql.execute(queryUpdate, id_user);
@@ -247,15 +310,22 @@ exports.RequestPasswordReset = async (req, res, next) => {
     try {
         ServerDetails.showRequestId()
     var emailUser = req.body.email
+    var UserValiList = []
+    var email_user;
+    var id_user;
     const query = `SELECT * FROM tbl_account;`
     const result = await mysql.execute(query)
     if(result.length > 0){
         for(var i = 0 ; i < result.length; i++){
             var email = EncryptDep.Decrypt(result[i].email);
             if(email == emailUser ){
-            var email_user = email
-            var id_user = result[i].id_user
-            var idPasswordReset = "pswd"+ makeidForUser(9) + "PalacePetz-" + "sys" + makeidForUser(1) + "tem"+ makeidForUser(3) + "a"+ makeidForUser(2) + "c"+ makeidForUser(3) + "e"+ makeidForUser(1) + "key" + makeidForUser(4) + "-Pala"+ makeidForUser(5) +"cePetz-pswd" + makeidForUser(8) + 'p0'
+                email_user = email
+                id_user = result[i].id_user
+                UserValiList.push(email)
+            }
+        }
+        if(UserValiList.length > 0){
+            var idPasswordReset = "pswd"+ Generate_verify_id_for_user(9) + "PalacePetz-" + "sys" + Generate_verify_id_for_user(1) + "tem"+ Generate_verify_id_for_user(3) + "a"+ Generate_verify_id_for_user(2) + "c"+ Generate_verify_id_for_user(3) + "e"+ Generate_verify_id_for_user(1) + "key" + Generate_verify_id_for_user(4) + "-Pala"+ Generate_verify_id_for_user(5) +"cePetz-pswd" + Generate_verify_id_for_user(8) + 'p0'
             const queryUpdate = `UPDATE tbl_account SET verify_id = ? WHERE id_user = ?`
             await mysql.execute(queryUpdate, [idPasswordReset, id_user])
             var resultEmail = Emails.SendPasswordReset(email_user, 'https://palacepetz.azurewebsites.net/' + "novasenha/" + idPasswordReset + "/" + id_user)
@@ -264,10 +334,8 @@ exports.RequestPasswordReset = async (req, res, next) => {
             }else{
                 return res.status(200).send({ message: 'Password reset email sent' })
             }
-            }else{
-                return res.status(404).send( { message: 'User not registered' } )
-            }
-        }
+        }else
+            return res.status(404).send( { message: 'User not registered' } )
     }else{
         return res.status(404).send( { message: 'User not registered' } )
     }
@@ -284,23 +352,28 @@ exports.ChangePassword = async (req, res, next) => {
         var verify_id = req.body.verify_id
         var id_user = req.body.id_user
         var newpassword = req.body.newpassword
+        var email_user;
+        var nm_user;
         var last2 = verify_id.slice(-2);
         if(verify_id.substr(0, 4) === "pswd" || last2 == 'p0') {
-            var query = `SELECT verify_id, verify FROM tbl_account WHERE id_user = ?`
+            var query = `SELECT * FROM tbl_account WHERE id_user = ?`
             var result = await mysql.execute(query, id_user)
             if(result.length > 0){
+                email_user = EncryptDep.Decrypt(result[0].email);
+                nm_user = EncryptDep.Decrypt(result[0].name_user);
                 if(result[0].verify_id == verify_id){
                     if(result[0].verify == 1){
                         const hash = await bcrypt.hashSync(newpassword, 12);
                         var queryUpdate = `UPDATE tbl_account SET password = ?, verify_id = "Confirmed" WHERE id_user = ?`
                         await mysql.execute(queryUpdate, [ hash, id_user ])
+                        Emails.SendPasswordHasChange(email_user, nm_user, id_user)
                         return res.status(200).send({ message: 'Password updated' })
                     }else
                     return res.status(401).send({ message: 'User does not contain verified email' })
                 }else
                 return res.status(405).send({ message: 'ID does not correspond to a password change' })
             }else
-            return res.status(405).send({ message: 'User not registered' })
+                return res.status(405).send({ message: 'User not registered' })
         }else{
             return res.status(405).send({ message: 'ID does not correspond to a password change' })
         }
@@ -310,6 +383,7 @@ exports.ChangePassword = async (req, res, next) => {
     }
 }
 
+//  Method to Register Products on User Historic
 exports.Register_Product_On_User_Historic = async (req, res, next) => {
     try {
         var id_user = req.params.id_user
@@ -337,6 +411,7 @@ exports.Register_Product_On_User_Historic = async (req, res, next) => {
     }
 }
 
+//  Method to get User Historic
 exports.GetUserHistoric = async (req, res, next) => {
     try {
         var id_user = req.params.id_user
@@ -395,7 +470,62 @@ exports.GetUserHistoric = async (req, res, next) => {
     }
 }
 
-function makeidForUser(length) {
+//  Method to clear User Hostoric
+exports.ClearHistoric = async (req, res, next) => {
+    try {
+        var id_user = req.params.id_user
+        var result_USER = await mysql.execute('SELECT * FROM tbl_account WHERE id_user = ?', id_user)
+        if(result_USER.length > 0){
+            /* Clear Table Historic */
+            await mysql.execute(`DELETE FROM tbl_product_historic WHERE id_user = ?`, id_user) 
+            res.status(200).send({message: 'Historic sucessfully clear'})
+        }else
+            return res.status(404).send( { message: 'User not registered' } )
+    } catch (error) {
+        ServerDetails.RegisterServerError("Clear Product Historic", error.toString());
+        return res.status(500).send( { error: error } )
+    }
+}
+
+//  Method for Update UserName
+exports.UpdateUserName = async (req, res, next) => {
+    try{
+        ServerDetails.showRequestId()
+        var queryUser = `SELECT * FROM tbl_account WHERE id_user = ?;`
+        var result = await mysql.execute(queryUser, req.body.id_user)
+        if(result.length > 0){
+            if(BadWords.VerifyUsername(req.body.username)){
+                return res.status(406).send({ error: "Username not allowed"})                
+            }else{
+                var query = `UPDATE tbl_account SET 
+                username = ?
+                    WHERE id_user = ?;`
+                await mysql.execute(query, [EncryptDep.Encrypto(req.body.username), req.body.id_user])
+                return res.status(200).send( { message: 'Username successfully update'} )
+            }
+        }else{
+            return res.status(404).send( { message: 'User not registered' } )
+        }
+    }catch(error){
+        ServerDetails.RegisterServerError("Update Profile", error.toString());
+        return res.status(500).send( { error: error } )
+    }
+}
+
+//  Method for Update UserName
+exports.UpdateUserNameIntern = async (id_user, username) => {
+    try{
+        var newUserName = username + id_user;
+        var query = `UPDATE tbl_account SET 
+            username = ?
+                WHERE id_user = ?;`
+            await mysql.execute(query, [EncryptDep.Encrypto(newUserName), id_user])
+    }catch(error){
+        ServerDetails.RegisterServerError("Update Profile", error.toString());
+    }
+}
+
+function Generate_verify_id_for_user(length) {
     var result           = [];
     var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     var charactersLength = characters.length;
@@ -404,6 +534,6 @@ function makeidForUser(length) {
     charactersLength)));
     }
     var charset = result.join('');
-   var id = charset + Math.floor(Math.random() * 256);
+    var id = charset + Math.floor(Math.random() * 256);
     return id;
 }
